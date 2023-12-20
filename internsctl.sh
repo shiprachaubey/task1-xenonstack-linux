@@ -2,7 +2,7 @@
 
 # Define variables
 VERSION="v0.1.0"
-MANUAL_PATH="E:/task1"  # Adjust the path as needed
+MANUAL_PATH="E:/task1-xenonstack-linux"  # Adjust the path as needed
 
 # Function to display command manual
 display_manual() {
@@ -104,6 +104,67 @@ list_users() {
         getent passwd | cut -d: -f1
     fi
 }
+# get_file_info() {
+#     if [ -z "$1" ]; then
+#         echo "Error: Missing file name. Usage: internsctl file getinfo <file-name>"
+#         exit 1
+#     fi
+
+#     filename="$1"
+
+#     # Check if the file exists
+#     if [ ! -e "$filename" ]; then
+#         echo "Error: File '$filename' not found."
+#         exit 1
+#     fi
+
+#     # Get file information
+#     file_info=$(stat -c "File: %n\nAccess: %A\nSize(B): %s\nOwner: %U\nModify: %y" "$filename")
+
+#     echo -e "$file_info"
+# }
+
+get_file_info() {
+    if [ -z "$1" ]; then
+        echo "Error: Missing file name. Usage: internsctl file getinfo [options] <file-name>"
+        exit 1
+    fi
+
+    filename="$1"
+
+    # Check if the file exists
+    if [ ! -e "$filename" ]; then
+        echo "Error: File '$filename' not found."
+        exit 1
+    fi
+
+    # If options are provided, get the selected information based on options
+    if [ -n "$2" ]; then
+        case "$2" in
+            --size | -s)
+                stat -c "%s" "$filename"
+                ;;
+            --permissions | -p)
+                stat -c "%A" "$filename"
+                ;;
+            --owner | -o)
+                stat -c "%U" "$filename"
+                ;;
+            --last-modified | -m)
+                stat -c "%y" "$filename"
+                ;;
+            *)
+                echo "Error: Unknown option '$2'. Supported options are --size, --permissions, --owner, --last-modified."
+                exit 1
+                ;;
+        esac
+    else
+        # If no options are provided, display full information with each piece on a new line
+        file_info=$(stat -c "File: %n\nAccess: %A\nSize(B): %s\nOwner: %U\nModify: %y" "$filename")
+        echo -e "$file_info"
+    fi
+}
+
 
 # Main script logic
 case "$1" in
@@ -145,6 +206,17 @@ case "$1" in
                 ;;
             *)
                 echo "Error: Unknown subcommand. Use 'internsctl user create <username>' to create a user, 'internsctl user list' to list all users, or 'internsctl user list --sudo-only' to list users with sudo permissions."
+                exit 1
+                ;;
+        esac
+        ;;
+    file)
+        case "$2" in
+            getinfo)
+                get_file_info "$3"
+                ;;
+            *)
+                echo "Error: Unknown subcommand. Use 'internsctl file getinfo <file-name>' to get information about a file."
                 exit 1
                 ;;
         esac
